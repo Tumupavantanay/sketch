@@ -17,6 +17,8 @@ interface LikeState {
   count: number;
 }
 
+const likedKey = (id: number) => `sketch-liked-${id}`;
+
 const showcaseLayout = [
   "xl:col-span-5 md:col-span-3",
   "xl:col-span-3 md:col-span-3 xl:translate-y-8",
@@ -33,12 +35,12 @@ const showcaseLayout = [
 function buildInitialLikes(): Record<number, LikeState> {
   const result: Record<number, LikeState> = {};
   for (const sketch of sketches) {
-    const stored =
+    const storedLiked =
       typeof window !== "undefined"
-        ? localStorage.getItem(`sketch-liked-${sketch.id}`)
+        ? localStorage.getItem(likedKey(sketch.id))
         : null;
-    const liked = stored === "true";
-    result[sketch.id] = { liked, count: liked ? 1 : 0 };
+    const liked = storedLiked === "true";
+    result[sketch.id] = { liked, count: 0 };
   }
   return result;
 }
@@ -53,20 +55,90 @@ export default function GalleryPage() {
     setLikes(buildInitialLikes());
   }, []);
 
+  const syncLikeCounts = useCallback(async () => {
+    try {
+      const response = await fetch("/api/likes", { cache: "no-store" });
+      if (!response.ok) return;
+
+      const data = (await response.json()) as {
+        counts?: Record<string, number>;
+      };
+
+      if (!data.counts) return;
+
+      setLikes((prev) => {
+        const next = { ...prev };
+        for (const sketch of sketches) {
+          const current = prev[sketch.id] ?? { liked: false, count: 0 };
+          const apiCount = Number(data.counts?.[String(sketch.id)] ?? 0);
+          next[sketch.id] = {
+            liked: current.liked,
+            count: Number.isFinite(apiCount) && apiCount > 0 ? apiCount : 0,
+          };
+        }
+        return next;
+      });
+    } catch {
+      // Keep UI responsive even if API is temporarily unavailable.
+    }
+  }, []);
+
+  useEffect(() => {
+    syncLikeCounts();
+    const timer = window.setInterval(syncLikeCounts, 15000);
+    return () => window.clearInterval(timer);
+  }, [syncLikeCounts]);
+
   const toggleLike = useCallback((id: number) => {
+    let nextLiked = false;
+    let previousCount = 0;
+
     setLikes((prev) => {
-      const sketch = sketches.find((s) => s.id === id)!;
       const current = prev[id] ?? { liked: false, count: 0 };
-      const nextLiked = !current.liked;
-      localStorage.setItem(`sketch-liked-${id}`, String(nextLiked));
+      previousCount = current.count;
+      nextLiked = !current.liked;
+
       return {
         ...prev,
         [id]: {
           liked: nextLiked,
-          count: nextLiked ? 1 : 0,
+          count: nextLiked
+            ? current.count + 1
+            : Math.max(0, current.count - 1),
         },
       };
     });
+
+    localStorage.setItem(likedKey(id), String(nextLiked));
+
+    void fetch(`/api/likes/${id}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ liked: nextLiked }),
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Failed to update likes");
+        const data = (await response.json()) as { count?: number };
+        const count = Number(data.count ?? 0);
+
+        setLikes((prev) => ({
+          ...prev,
+          [id]: {
+            liked: prev[id]?.liked ?? nextLiked,
+            count: Number.isFinite(count) && count > 0 ? count : 0,
+          },
+        }));
+      })
+      .catch(() => {
+        setLikes((prev) => ({
+          ...prev,
+          [id]: {
+            liked: !nextLiked,
+            count: previousCount,
+          },
+        }));
+        localStorage.setItem(likedKey(id), String(!nextLiked));
+      });
   }, []);
 
   /* ── Disable right-click globally on this page ── */
@@ -243,7 +315,7 @@ export default function GalleryPage() {
       </footer>
 
       <p className="pointer-events-none fixed bottom-3 right-4 z-40 text-[10px] sm:text-xs tracking-[0.24em] uppercase text-zinc-500/70">
-        Tumu Pavan Tanya
+        Tumu Pavan Tanay
       </p>
 
       {/* ── Lightbox ── */}
