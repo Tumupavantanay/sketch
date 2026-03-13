@@ -49,6 +49,7 @@ export default function GalleryPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [likes, setLikes] = useState<Record<number, LikeState>>({});
+  const recentlyToggled = useRef<Map<number, number>>(new Map());
 
   /* ── Hydrate likes from localStorage on mount ── */
   useEffect(() => {
@@ -66,9 +67,12 @@ export default function GalleryPage() {
 
       if (!data.counts) return;
 
+      const now = Date.now();
       setLikes((prev) => {
         const next = { ...prev };
         for (const sketch of sketches) {
+          const lastToggle = recentlyToggled.current.get(sketch.id) ?? 0;
+          if (now - lastToggle < 5000) continue; // skip recently toggled IDs
           const current = prev[sketch.id] ?? { liked: false, count: 0 };
           const apiCount = Number(data.counts?.[String(sketch.id)] ?? 0);
           next[sketch.id] = {
@@ -92,6 +96,8 @@ export default function GalleryPage() {
   const toggleLike = useCallback((id: number) => {
     let nextLiked = false;
     let previousCount = 0;
+
+    recentlyToggled.current.set(id, Date.now());
 
     setLikes((prev) => {
       const current = prev[id] ?? { liked: false, count: 0 };

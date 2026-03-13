@@ -1,37 +1,24 @@
-import { kv } from "@vercel/kv";
+import { Redis } from "@upstash/redis";
 
-const memoryLikes = new Map<number, number>();
+const redis = new Redis({
+  url: process.env.KV_REST_API_URL ?? "",
+  token: process.env.KV_REST_API_TOKEN ?? "",
+});
 
 const keyFor = (id: number) => `likes:${id}`;
 
 export async function getLikeCount(id: number): Promise<number> {
-  try {
-    const value = await kv.get<number>(keyFor(id));
-    return typeof value === "number" && value > 0 ? value : 0;
-  } catch {
-    return memoryLikes.get(id) ?? 0;
-  }
+  const value = await redis.get<number>(keyFor(id));
+  return typeof value === "number" && value > 0 ? value : 0;
 }
 
 export async function setLikeCount(id: number, count: number): Promise<number> {
   const safe = Math.max(0, count);
-
-  try {
-    await kv.set(keyFor(id), safe);
-  } catch {
-    memoryLikes.set(id, safe);
-  }
-
+  await redis.set(keyFor(id), safe);
   return safe;
 }
 
 export async function incrementLikeCount(id: number): Promise<number> {
-  try {
-    const next = await kv.incr(keyFor(id));
-    return typeof next === "number" && next > 0 ? next : 0;
-  } catch {
-    const next = (memoryLikes.get(id) ?? 0) + 1;
-    memoryLikes.set(id, next);
-    return next;
-  }
+  const next = await redis.incr(keyFor(id));
+  return typeof next === "number" && next > 0 ? next : 0;
 }
