@@ -19,12 +19,6 @@ interface LightboxProps {
   onToggleLike: (id: number) => void;
 }
 
-const aspectClasses: Record<Sketch["aspectRatio"], string> = {
-  portrait: "aspect-[3/4]",
-  square: "aspect-square",
-  landscape: "aspect-[4/3]",
-};
-
 export default function Lightbox({
   sketches,
   initialIndex,
@@ -163,7 +157,7 @@ export default function Lightbox({
     >
       <div
         ref={panelRef}
-        className="relative w-full max-w-5xl rounded-2xl overflow-hidden border border-zinc-200/20 bg-zinc-900 shadow-2xl"
+        className="relative w-full max-w-5xl max-h-[92vh] rounded-2xl overflow-hidden border border-zinc-200/20 bg-zinc-900 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Close ── */}
@@ -206,10 +200,10 @@ export default function Lightbox({
         )}
 
         {/* ── Content (animated on navigate) ── */}
-        <div ref={contentRef}>
+        <div ref={contentRef} className="flex flex-col max-h-[92vh]">
           {/* Image area */}
           <div
-            className={`relative w-full ${aspectClasses[sketch.aspectRatio]} select-none pointer-events-none overflow-hidden`}
+            className="relative w-full h-[56vh] sm:h-[62vh] md:h-[68vh] bg-zinc-950 select-none pointer-events-none overflow-hidden"
           >
             {sketch.imageSrc ? (
               <>
@@ -219,7 +213,7 @@ export default function Lightbox({
                   src={sketch.imageSrc}
                   alt={sketch.title}
                   fill
-                  className="object-cover"
+                  className="object-contain p-1 sm:p-2"
                   sizes="(max-width: 768px) 100vw, 80vw"
                   draggable={false}
                   style={{ opacity: 0 }}

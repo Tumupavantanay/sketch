@@ -242,6 +242,10 @@ export default function GalleryPage() {
         </div>
       </footer>
 
+      <p className="pointer-events-none fixed bottom-3 right-4 z-40 text-[10px] sm:text-xs tracking-[0.24em] uppercase text-zinc-500/70">
+        Tumu Pavan Tanya
+      </p>
+
       {/* ── Lightbox ── */}
       {openIndex !== null && (
         <Lightbox
