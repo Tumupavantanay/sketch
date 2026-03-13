@@ -251,7 +251,7 @@ export default function Lightbox({
           </div>
 
           {/* Info bar */}
-          <div className="p-5 sm:p-6 border-t border-zinc-700/60 text-zinc-200 flex items-start justify-between gap-4">
+          <div className="p-4 sm:p-5 border-t border-zinc-700/60 text-zinc-200">
             <div className="min-w-0">
               <p className="font-display italic text-2xl leading-tight">
                 {sketch.title}

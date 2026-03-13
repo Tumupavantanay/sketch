@@ -100,14 +100,14 @@ export default function SketchCard({
       </div>
 
       {/* Hover overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/92 via-zinc-900/48 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-out flex flex-col justify-end p-5 backdrop-blur-[2px]">
+      <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/92 via-zinc-900/48 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-out flex flex-col justify-end p-4 backdrop-blur-[2px]">
         <span className="absolute top-4 right-4 text-[10px] tracking-[0.25em] uppercase text-zinc-400 font-light">
           {sketch.year}
         </span>
         <h3 className="font-display italic text-white text-2xl leading-tight mb-1 translate-y-3 group-hover:translate-y-0 transition-transform duration-500 ease-out">
           {sketch.title}
         </h3>
-        <p className="text-xs text-zinc-300 leading-relaxed mb-4 line-clamp-3 translate-y-3 group-hover:translate-y-0 transition-transform duration-500 ease-out delay-75">
+        <p className="text-xs text-zinc-300 leading-relaxed mb-2 line-clamp-3 translate-y-3 group-hover:translate-y-0 transition-transform duration-500 ease-out delay-75">
           {sketch.description}
         </p>
         <div className="flex items-center gap-3 translate-y-3 group-hover:translate-y-0 transition-transform duration-500 ease-out delay-100">

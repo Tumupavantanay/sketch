@@ -155,7 +155,7 @@ export default function GalleryPage() {
       <div className="ambient-orb absolute top-[48rem] left-[8%] h-56 w-56 rounded-full bg-zinc-200/35 blur-3xl pointer-events-none" />
 
       {/* ── Hero header ── */}
-      <section className="hero-shell pt-32 pb-16 px-6 max-w-6xl mx-auto">
+      <section className="hero-shell pt-24 pb-10 px-6 max-w-6xl mx-auto">
         <div className="hero-chrome inline-flex items-center gap-2 text-[10px] tracking-[0.3em] uppercase text-zinc-500 mb-6 rounded-full border border-zinc-300/70 bg-white/70 px-4 py-1.5 backdrop-blur-sm">
           Graphite Archive
         </div>
@@ -170,7 +170,7 @@ export default function GalleryPage() {
       </section>
 
       {/* ── Curated gallery layout ── */}
-      <section className="px-6 pb-24 max-w-6xl mx-auto">
+      <section className="px-6 pb-16 max-w-6xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-6 xl:grid-cols-12 gap-5 md:gap-6">
           {sketches.map((sketch, i) => (
             <div
@@ -188,7 +188,7 @@ export default function GalleryPage() {
       </section>
 
       {/* ── Footer ── */}
-      <footer className="border-t border-zinc-200/70 py-10 px-6 backdrop-blur-[2px] bg-white/40">
+      <footer className="border-t border-zinc-200/70 py-8 px-6 backdrop-blur-[2px] bg-white/40">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="footer-line font-display italic text-zinc-500 text-base">
             Graphite
