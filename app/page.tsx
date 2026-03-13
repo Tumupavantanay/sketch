@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -11,13 +11,6 @@ import Lightbox from "@/components/lightbox";
 import { sketches } from "@/lib/data/sketches";
 
 gsap.registerPlugin(ScrollTrigger);
-
-interface LikeState {
-  liked: boolean;
-  count: number;
-}
-
-const likedKey = (id: number) => `sketch-liked-${id}`;
 
 const showcaseLayout = [
   "xl:col-span-5 md:col-span-3",
@@ -32,112 +25,9 @@ const showcaseLayout = [
   "xl:col-span-4 md:col-span-6",
 ] as const;
 
-function buildInitialLikes(): Record<number, LikeState> {
-  const result: Record<number, LikeState> = {};
-  for (const sketch of sketches) {
-    const storedLiked =
-      typeof window !== "undefined"
-        ? localStorage.getItem(likedKey(sketch.id))
-        : null;
-    const liked = storedLiked === "true";
-    result[sketch.id] = { liked, count: 0 };
-  }
-  return result;
-}
-
 export default function GalleryPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [openIndex, setOpenIndex] = useState<number | null>(null);
-  const [likes, setLikes] = useState<Record<number, LikeState>>({});
-  const recentlyToggled = useRef<Map<number, number>>(new Map());
-
-  /* ── Hydrate likes from localStorage on mount ── */
-  useEffect(() => {
-    setLikes(buildInitialLikes());
-  }, []);
-
-  const syncLikeCounts = useCallback(async () => {
-    try {
-      const response = await fetch("/api/likes", { cache: "no-store" });
-      if (!response.ok) return;
-
-      const data = (await response.json()) as {
-        counts?: Record<string, number>;
-      };
-
-      if (!data.counts) return;
-
-      const now = Date.now();
-      setLikes((prev) => {
-        const next = { ...prev };
-        for (const sketch of sketches) {
-          const lastToggle = recentlyToggled.current.get(sketch.id) ?? 0;
-          if (now - lastToggle < 5000) continue; // skip recently toggled IDs
-          const current = prev[sketch.id] ?? { liked: false, count: 0 };
-          const apiCount = Number(data.counts?.[String(sketch.id)] ?? 0);
-          next[sketch.id] = {
-            liked: current.liked,
-            count: Number.isFinite(apiCount) && apiCount > 0 ? apiCount : 0,
-          };
-        }
-        return next;
-      });
-    } catch {
-      // Keep UI responsive even if API is temporarily unavailable.
-    }
-  }, []);
-
-  useEffect(() => {
-    syncLikeCounts();
-    const timer = window.setInterval(syncLikeCounts, 15000);
-    return () => window.clearInterval(timer);
-  }, [syncLikeCounts]);
-
-  const toggleLike = useCallback((id: number) => {
-    let nextLiked = false;
-    let previousCount = 0;
-
-    recentlyToggled.current.set(id, Date.now());
-
-    setLikes((prev) => {
-      const current = prev[id] ?? { liked: false, count: 0 };
-      previousCount = current.count;
-      nextLiked = !current.liked;
-
-      return {
-        ...prev,
-        [id]: {
-          liked: nextLiked,
-          count: nextLiked
-            ? current.count + 1
-            : Math.max(0, current.count - 1),
-        },
-      };
-    });
-
-    localStorage.setItem(likedKey(id), String(nextLiked));
-
-    void fetch(`/api/likes/${id}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ liked: nextLiked }),
-    })
-      .then(async (response) => {
-        if (!response.ok) return; // keep optimistic count on API error
-        const data = (await response.json()) as { count?: number };
-        const count = Number(data.count ?? 0);
-        // Only update from server if it returned a meaningful count
-        if (Number.isFinite(count) && count > 0) {
-          setLikes((prev) => ({
-            ...prev,
-            [id]: { liked: prev[id]?.liked ?? nextLiked, count },
-          }));
-        }
-      })
-      .catch(() => {
-        // Network failure — keep the optimistic state, don't rollback
-      });
-  }, []);
 
   /* ── Disable right-click globally on this page ── */
   useEffect(() => {
@@ -290,10 +180,7 @@ export default function GalleryPage() {
               <SketchCard
                 sketch={sketch}
                 index={i}
-                liked={likes[sketch.id]?.liked ?? false}
-                likeCount={likes[sketch.id]?.count ?? 0}
                 onOpen={setOpenIndex}
-                onToggleLike={toggleLike}
               />
             </div>
           ))}
@@ -322,8 +209,6 @@ export default function GalleryPage() {
           sketches={sketches}
           initialIndex={openIndex}
           onClose={() => setOpenIndex(null)}
-          likes={likes}
-          onToggleLike={toggleLike}
         />
       )}
     </main>

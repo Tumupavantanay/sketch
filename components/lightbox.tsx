@@ -3,28 +3,19 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import gsap from "gsap";
-import { X, ChevronLeft, ChevronRight, Heart, Info } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Info } from "lucide-react";
 import type { Sketch } from "@/lib/data/sketches";
-
-interface LikeState {
-  liked: boolean;
-  count: number;
-}
 
 interface LightboxProps {
   sketches: Sketch[];
   initialIndex: number;
   onClose: () => void;
-  likes: Record<number, LikeState>;
-  onToggleLike: (id: number) => void;
 }
 
 export default function Lightbox({
   sketches,
   initialIndex,
   onClose,
-  likes,
-  onToggleLike,
 }: LightboxProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -35,10 +26,6 @@ export default function Lightbox({
   const navDirRef = useRef<1 | -1>(1);
 
   const sketch = sketches[currentIndex];
-  const likeState: LikeState = likes[sketch.id] ?? {
-    liked: false,
-    count: 0,
-  };
 
   /* ── Open animation ── */
   useEffect(() => {
@@ -278,24 +265,6 @@ export default function Lightbox({
               </p>
             </div>
 
-            {/* Like button */}
-            <button
-              type="button"
-              onClick={() => onToggleLike(sketch.id)}
-              className={`flex-shrink-0 flex items-center gap-2 text-xs border px-4 py-2 rounded-full transition-all duration-300 ${
-                likeState.liked
-                  ? "bg-white text-zinc-900 border-white"
-                  : "border-zinc-600 text-zinc-400 hover:border-white hover:text-white"
-              }`}
-              aria-label={likeState.liked ? "Unlike" : "Like this sketch"}
-            >
-              <Heart
-                size={13}
-                className={likeState.liked ? "fill-zinc-900" : ""}
-                strokeWidth={1.5}
-              />
-              <span>{likeState.count}</span>
-            </button>
           </div>
         </div>
       </div>

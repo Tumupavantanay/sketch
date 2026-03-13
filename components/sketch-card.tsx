@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import Image from "next/image";
 import gsap from "gsap";
-import { Heart, Info } from "lucide-react";
+import { Info } from "lucide-react";
 import type { Sketch } from "@/lib/data/sketches";
 
 const aspectClasses: Record<Sketch["aspectRatio"], string> = {
@@ -15,26 +15,15 @@ const aspectClasses: Record<Sketch["aspectRatio"], string> = {
 interface SketchCardProps {
   sketch: Sketch;
   index: number;
-  liked: boolean;
-  likeCount: number;
   onOpen: (index: number) => void;
-  onToggleLike: (id: number) => void;
 }
 
 export default function SketchCard({
   sketch,
   index,
-  liked,
-  likeCount,
   onOpen,
-  onToggleLike,
 }: SketchCardProps) {
   const skeletonRef = useRef<HTMLDivElement>(null);
-
-  const handleLike = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onToggleLike(sketch.id);
-  };
 
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
@@ -122,22 +111,6 @@ export default function SketchCard({
           {sketch.description}
         </p>
         <div className="flex items-center gap-3 translate-y-3 group-hover:translate-y-0 transition-transform duration-500 ease-out delay-100">
-          <button
-            onClick={handleLike}
-            className={`flex items-center gap-1.5 text-xs border px-3 py-1.5 rounded-full transition-all duration-300 ${
-              liked
-                ? "bg-white text-zinc-900 border-white"
-                : "border-zinc-500 text-zinc-300 hover:border-white hover:text-white"
-            }`}
-            aria-label={liked ? "Unlike" : "Like this sketch"}
-          >
-            <Heart
-              size={12}
-              className={liked ? "fill-zinc-900 scale-110" : ""}
-              strokeWidth={1.5}
-            />
-            <span>{likeCount}</span>
-          </button>
           <span className="flex items-center gap-1 text-[10px] text-zinc-500 tracking-wider uppercase">
             <Info size={11} strokeWidth={1.5} />
             {sketch.medium}
