@@ -19,9 +19,13 @@ export async function POST(
   const body = (await request.json().catch(() => ({}))) as { liked?: boolean };
   const liked = Boolean(body.liked);
 
-  const count = liked
-    ? await incrementLikeCount(id)
-    : await setLikeCount(id, (await getLikeCount(id)) - 1);
-
-  return NextResponse.json({ id, count });
+  try {
+    const count = liked
+      ? await incrementLikeCount(id)
+      : await setLikeCount(id, (await getLikeCount(id)) - 1);
+    return NextResponse.json({ id, count });
+  } catch (err) {
+    console.error("likes POST error", err);
+    return NextResponse.json({ id, count: 0 }, { status: 500 });
+  }
 }

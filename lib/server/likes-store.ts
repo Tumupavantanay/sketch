@@ -1,24 +1,44 @@
 import { Redis } from "@upstash/redis";
 
-const redis = new Redis({
-  url: process.env.KV_REST_API_URL ?? "",
-  token: process.env.KV_REST_API_TOKEN ?? "",
-});
+// Strip accidental surrounding quotes (common Vercel paste mistake)
+const clean = (v: string | undefined) => (v ?? "").replace(/^"|"$/g, "").trim();
+
+const url = clean(process.env.KV_REST_API_URL);
+const token = clean(process.env.KV_REST_API_TOKEN);
+
+const redis = url && token ? new Redis({ url, token }) : null;
 
 const keyFor = (id: number) => `likes:${id}`;
 
 export async function getLikeCount(id: number): Promise<number> {
-  const value = await redis.get<number>(keyFor(id));
-  return typeof value === "number" && value > 0 ? value : 0;
+  if (!redis) return 0;
+  try {
+    const value = await redis.get<number>(keyFor(id));
+    const n = Number(value);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  } catch {
+    return 0;
+  }
 }
 
 export async function setLikeCount(id: number, count: number): Promise<number> {
   const safe = Math.max(0, count);
-  await redis.set(keyFor(id), safe);
+  if (!redis) return safe;
+  try {
+    await redis.set(keyFor(id), safe);
+  } catch {
+    // ignore write errors
+  }
   return safe;
 }
 
 export async function incrementLikeCount(id: number): Promise<number> {
-  const next = await redis.incr(keyFor(id));
-  return typeof next === "number" && next > 0 ? next : 0;
+  if (!redis) return 0;
+  try {
+    const next = await redis.incr(keyFor(id));
+    const n = Number(next);
+    return Number.isFinite(n) && n > 0 ? n : 1;
+  } catch {
+    return 0;
+  }
 }

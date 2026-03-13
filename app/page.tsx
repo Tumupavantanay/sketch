@@ -123,27 +123,19 @@ export default function GalleryPage() {
       body: JSON.stringify({ liked: nextLiked }),
     })
       .then(async (response) => {
-        if (!response.ok) throw new Error("Failed to update likes");
+        if (!response.ok) return; // keep optimistic count on API error
         const data = (await response.json()) as { count?: number };
         const count = Number(data.count ?? 0);
-
-        setLikes((prev) => ({
-          ...prev,
-          [id]: {
-            liked: prev[id]?.liked ?? nextLiked,
-            count: Number.isFinite(count) && count > 0 ? count : 0,
-          },
-        }));
+        // Only update from server if it returned a meaningful count
+        if (Number.isFinite(count) && count > 0) {
+          setLikes((prev) => ({
+            ...prev,
+            [id]: { liked: prev[id]?.liked ?? nextLiked, count },
+          }));
+        }
       })
       .catch(() => {
-        setLikes((prev) => ({
-          ...prev,
-          [id]: {
-            liked: !nextLiked,
-            count: previousCount,
-          },
-        }));
-        localStorage.setItem(likedKey(id), String(!nextLiked));
+        // Network failure — keep the optimistic state, don't rollback
       });
   }, []);
 
